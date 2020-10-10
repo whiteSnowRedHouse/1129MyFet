@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false">
+
+
+    <TextView
+        android:id="@+id/scan_device"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:layout_marginHorizontal="1dp"
+        android:layout_marginVertical="1dp"
+        android:layout_marginStart="1dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:text="@string/choose_scan_device"
+        android:textSize="18sp" />
+</LinearLayout>

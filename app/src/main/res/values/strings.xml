@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">BleLineChartFrg</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="open_bluetooth">Open Bluetooth</string>
+    <string name="Connect">Connect</string>
+    <string name="StartTest">Start</string>
+    <string name="encourage">you can do it</string>
+    <string name="test">test</string>
+    <string name="file">file</string>
+    <string name="information">information</string>
+    <string name="checkbox">checkBox</string>
+    <string name="ScanReult">ScanReult</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="check_scan_device">choose_scan_device</string>
+    <string name="choose_scan_device">choose_scan_device</string>
+    <string name="textview">readText</string>
+    <string name="input_parameter">input</string>
+</resources>

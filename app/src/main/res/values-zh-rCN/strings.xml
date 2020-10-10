@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BleLineChartFrg</string>
+    <string name="hello_blank_fragment">主页</string>
+    <string name="open_bluetooth">打开蓝牙</string>
+    <string name="Connect">连接</string>
+    <string name="StartTest">开始测试</string>
+    <string name="encourage">加油，你可以的</string>
+    <string name="test">测试</string>
+    <string name="file">文件</string>
+    <string name="information">信息</string>
+    <string name="checkbox">选择框</string>
+    <string name="ScanReult">扫描结果</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
+    <string name="check_scan_device">请选择扫描设备</string>
+    <string name="choose_scan_device">请选择扫描设备</string>
+    <string name="textview">读数</string>
+    <string name="input_parameter">请输入</string>
+</resources>
