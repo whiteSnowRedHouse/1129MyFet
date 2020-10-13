@@ -4,8 +4,11 @@ import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
+import android.content.ComponentName
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -29,7 +32,6 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class FirstFragment : Fragment() {
-    // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
 
@@ -55,6 +57,34 @@ class FirstFragment : Fragment() {
         val connectButton: Button = rootView.findViewById(R.id.button3)//蓝牙扫描按钮
         val lineChart1: LineChart = rootView.findViewById(R.id.lineChart1)//通道1数据
         val lineChart2: LineChart = rootView.findViewById(R.id.lineChart2)//通道2数据
+        val readText: TextView = rootView.findViewById(R.id.textView3)//蓝牙读出的数据
+        val mBluetoothBService: BluetoothService? = null
+        val TAG = "蓝牙service"
+        /* BluetoothLeService绑定的回调函数 */
+//        val mServiceConnection: ServiceConnection = object : ServiceConnection {
+//            override fun onServiceConnected(
+//                componentName: ComponentName,
+//                service: IBinder
+//            ) {
+//               mBluetoothBService=get
+//                if (!com.example.blelinechartfrg.mBluetoothLeService.initialize()) {
+//                    Log.e(
+//                        TAG,
+//                        "Unable to initialize Bluetooth"
+//                    )
+//                    finish()
+//                }
+//                // Automatically connects to the device upon successful start-up
+//                // initialization.
+//                // 根据蓝牙地址，连接设备
+//                com.example.blelinechartfrg.mBluetoothLeService.connect(mDeviceAddress)
+//            }
+//
+//            override fun onServiceDisconnected(componentName: ComponentName) {
+//                com.example.blelinechartfrg.mBluetoothLeService = null
+//            }
+//        }
+
         var myLineChartData: LineChartView1//创建ViewModel对象
         var x = 0
         var y = 0
@@ -86,7 +116,7 @@ class FirstFragment : Fragment() {
             }
         })
         var bluetoothDevice: BluetoothDevice
-        var bluetoothGatt:BluetoothGatt
+        var bluetoothGatt: BluetoothGatt
         scanButton.setOnClickListener(View.OnClickListener {
             mBleUtil!!.scanLeDevice()
             val builder = AlertDialog.Builder(getActivity())
@@ -94,9 +124,9 @@ class FirstFragment : Fragment() {
                 .setAdapter(mBleUtil.adapter) { dialogInterface, i ->
                     Log.d("选择", i.toString())
                     bluetoothDevice = mBleUtil.adapter.getItem(i)!!
-                    bluetoothGatt= activity?.let { it1 -> mBleUtil.connnectGATTServer(it1,bluetoothDevice) }!!
-                    if(bluetoothGatt!=null)
-                    {
+                    bluetoothGatt =
+                        activity?.let { it1 -> mBleUtil.connnectGATTServer(it1, bluetoothDevice) }!!
+                    if (bluetoothGatt != null) {
                         Toast.makeText(activity, "蓝牙已连接", Toast.LENGTH_LONG).show()
                     }
                 }
@@ -105,6 +135,8 @@ class FirstFragment : Fragment() {
         })
         connectButton.setOnClickListener(View.OnClickListener {
             mBleUtil!!.readData()
+//            readText.setText(mBleUtil!!.readData().toString())
+
 
         })
 

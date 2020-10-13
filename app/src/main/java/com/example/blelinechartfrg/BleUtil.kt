@@ -5,10 +5,12 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.Handler
+import android.os.Message
 import android.util.Log
 import android.widget.ArrayAdapter
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.concurrent.thread
 
 
 /**
@@ -22,6 +24,7 @@ class BleUtil(context: Context) {
     private val bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
     private var mScanning = false
     private val handler = Handler()
+
     // Stops scanning after 10 seconds.
     private val SCAN_PERIOD: Long = 10000
     val bluetoothList: ArrayList<BluetoothDevice> = ArrayList()
@@ -33,20 +36,23 @@ class BleUtil(context: Context) {
     val TAG = "蓝牙连接"
     var bluetoothGatt: BluetoothGatt? = null
     val serviceUUID: UUID = UUID.fromString("0000FFE0-0000-1000-8000-00805F9B34FB")
-    val characteristicUUID: UUID = UUID.fromString("0000FFE1-0000-1000-8000-00805F9B34FB")
+    val characteristicUUID: UUID = UUID.fromString("0000ffe1-0000-1000-8000-00805F9B34FB")
     val notify_UUID_chara: UUID = UUID.fromString("0000FFE1-0000-1000-8000-00805F9B34FB")
     val notify_UUID_service: UUID = UUID.fromString("0000FFE1-0000-1000-8000-00805F9B34FB")
     var bluetoothGattService: BluetoothGattService? = null
     var bluetoothGattCharacteristic: BluetoothGattCharacteristic? = null
+    val readData=ArrayList<String>()
 
     fun getBluetoothAdapter(): BluetoothAdapter? {
         return bluetoothAdapter
     }
+
     val leScanCallback: ScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             super.onScanResult(callbackType, result)
             if (bluetoothList.contains(result.device) == false) {
                 adapter.add(result.device)
+                adapter.notifyDataSetChanged()
             }
         }
     }
@@ -77,9 +83,11 @@ class BleUtil(context: Context) {
     }
 
     //BLE client(app)读取数据
-    open fun readData(): Unit {
-        val characteristic: BluetoothGattCharacteristic =bluetoothGatt!!.getService(serviceUUID).getCharacteristic(characteristicUUID)
+    open fun readData() {
+        val characteristic: BluetoothGattCharacteristic =
+            bluetoothGatt!!.getService(serviceUUID).getCharacteristic(characteristicUUID)
         bluetoothGatt!!.readCharacteristic(characteristic)
+//        return readData
     }
     //写入数据，参考资料https://www.jianshu.com/p/d991f0fdec63
     //  这里写入数据需要说一下，首先拿到写入的BluetoothGattService和BluetoothGattCharacteristic对象，
@@ -92,7 +100,7 @@ class BleUtil(context: Context) {
 
         val service: BluetoothGattService? = bluetoothGatt?.getService(serviceUUID)
         val characteristicWrite = service?.getCharacteristic(characteristicUUID)
-        bluetoothGatt?.setCharacteristicNotification(characteristicWrite,true)
+        bluetoothGatt?.setCharacteristicNotification(characteristicWrite, true)
 //        val data: ByteArray = byteArrayOf(11)
         if (data.size > 20) { //数据大于个字节 分批次写入
             Log.e(TAG, "writeData: length=" + data.size)
@@ -123,7 +131,8 @@ class BleUtil(context: Context) {
             bluetoothGatt?.writeCharacteristic(characteristicWrite)
         }
     }
-    var isConnecting:Boolean=false
+
+    var isConnecting: Boolean = false
     private val gattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
         /**
          * 断开或连接 状态发生变化时调用
@@ -149,7 +158,6 @@ class BleUtil(context: Context) {
                 isConnecting = false
             }
         }
-
         /**
          * 发现设备（真正建立连接）
          */
@@ -161,11 +169,14 @@ class BleUtil(context: Context) {
             //获取初始化服务和特征值
 //            initServiceAndChara()
             //订阅通知
-            bluetoothGatt?.setCharacteristicNotification(
-                bluetoothGatt!!.getService(serviceUUID).getCharacteristic(characteristicUUID), true
-            )
-            Log.d(TAG,"getservice:"+bluetoothGatt!!.getService(serviceUUID).toString())
-            Log.d(TAG,"getCharacteristic:"+bluetoothGatt!!.getService(serviceUUID).getCharacteristic(characteristicUUID).toString())
+//            bluetoothGatt?.setCharacteristicNotification(
+//                bluetoothGatt!!.getService(serviceUUID).getCharacteristic(characteristicUUID), true
+//            )
+            Log.d(TAG, "getservice:" + bluetoothGatt!!.getService(serviceUUID).toString())
+//            Log.d(TAG,
+//                "getCharacteristic:" + bluetoothGatt!!.getService(serviceUUID)
+//                    .getCharacteristic(characteristicUUID).toString()
+//            )
 //            bluetoothGatt!!.setCharacteristicNotification(bluetoothGatt!!.getService(notify_UUID_service).getCharacteristic(notify_UUID_chara),true);
 //            UiThreadStatement.runOnUiThread(Runnable {
 //                bleListView.setVisibility(View.GONE)
@@ -184,8 +195,8 @@ class BleUtil(context: Context) {
         ) {
             super.onCharacteristicRead(gatt, characteristic, status)
             Log.d(TAG, "onCharacteristicRead()")
-            Log.d(TAG,"onCharacteristicRead()+"+characteristic.value[0])
-            var readArray= byteArrayOf(characteristic.value[0])
+            Log.d(TAG, "onCharacteristicRead()+" + characteristic.value[0])
+            readData.add(characteristic.value.toString())
 
         }
 
@@ -198,7 +209,7 @@ class BleUtil(context: Context) {
             status: Int
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
-            Log.d(TAG,"onCharacteristicWrite()  status=$status,value=" + characteristic.value)
+            Log.d(TAG, "onCharacteristicWrite()  status=$status,value=" + characteristic.value)
         }
 
         /**

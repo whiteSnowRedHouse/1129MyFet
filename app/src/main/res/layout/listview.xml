@@ -14,7 +14,8 @@
         android:layout_marginVertical="1dp"
         android:layout_marginStart="1dp"
         android:layout_weight="1"
+        android:background="#118899"
         android:focusable="false"
         android:text="@string/choose_scan_device"
-        android:textSize="18sp" />
+        android:textSize="24sp" />
 </LinearLayout>
