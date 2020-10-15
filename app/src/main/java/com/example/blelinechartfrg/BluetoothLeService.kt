@@ -14,13 +14,11 @@ class BluetoothLeService : Service() {
     private val mEnabledSensors: List<Sensor> = ArrayList()
 
     //蓝牙相关类
-    private var mBluetoothManager: BluetoothManager? = null
-    private var mBluetoothAdapter: BluetoothAdapter? = null
-    private var mBluetoothDeviceAddress: String? = null
-    private var mBluetoothGatt: BluetoothGatt? = null
-    private var mConnectionState = STATE_DISCONNECTED
-
-    // UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+    private var bluetoothManager: BluetoothManager? = null
+    private var bluetoothAdapter: BluetoothAdapter? = null
+    private var bluetoothDeviceAddress: String? = null
+    private var bluetoothGatt: BluetoothGatt? = null
+    private var connectionState = STATE_DISCONNECTED
     private var mOnDataAvailableListener: OnDataAvailableListener? = null
 
     // Implements callback methods for GATT events that the app cares about. For
@@ -57,19 +55,19 @@ class BluetoothLeService : Service() {
             if (newState == BluetoothProfile.STATE_CONNECTED) //连接成功
             {
                 intentAction = ACTION_GATT_CONNECTED
-                mConnectionState = STATE_CONNECTED
+                connectionState = STATE_CONNECTED
                 /* 通过广播更新连接状态 */
                 broadcastUpdate(intentAction)
                 Log.i(TAG, "Connected to GATT server.")
                 // Attempts to discover services after successful connection.
                 Log.i(
                     TAG,
-                    "Attempting to start service discovery:" + mBluetoothGatt!!.discoverServices()
+                    "Attempting to start service discovery:" + bluetoothGatt!!.discoverServices()
                 )
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) //连接失败
             {
                 intentAction = ACTION_GATT_DISCONNECTED
-                mConnectionState = STATE_DISCONNECTED
+                connectionState = STATE_DISCONNECTED
                 Log.i(TAG, "Disconnected from GATT server.")
                 broadcastUpdate(intentAction)
             }
@@ -220,15 +218,15 @@ class BluetoothLeService : Service() {
     fun initialize(): Boolean {
         // For API level 18 and above, get a reference to BluetoothAdapter
         // through BluetoothManager.
-        if (mBluetoothManager == null) {   //获取系统的蓝牙管理器
-            mBluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            if (mBluetoothManager == null) {
+        if (bluetoothManager == null) {   //获取系统的蓝牙管理器
+            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+            if (bluetoothManager == null) {
                 Log.e(TAG, "Unable to initialize BluetoothManager.")
                 return false
             }
         }
-        mBluetoothAdapter = mBluetoothManager!!.adapter
-        if (mBluetoothAdapter == null) {
+        bluetoothAdapter = bluetoothManager!!.adapter
+        if (bluetoothAdapter == null) {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.")
             return false
         }
@@ -237,45 +235,45 @@ class BluetoothLeService : Service() {
 
     // 连接远程蓝牙
     fun connect(address: String?): Boolean {
-        if (mBluetoothAdapter == null || address == null) {
+        if (bluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.")
             return false
         }
         // Previously connected device. Try to reconnect.
-        if (mBluetoothDeviceAddress != null && address == mBluetoothDeviceAddress && mBluetoothGatt != null
+        if (bluetoothDeviceAddress != null && address == bluetoothDeviceAddress && bluetoothGatt != null
         ) {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.")
-            return if (mBluetoothGatt!!.connect()) //连接蓝牙，其实就是调用BluetoothGatt的连接方法
+            return if (bluetoothGatt!!.connect()) //连接蓝牙，其实就是调用BluetoothGatt的连接方法
             {
-                mConnectionState = STATE_CONNECTING
+                connectionState = STATE_CONNECTING
                 true
             } else {
                 false
             }
         }
         /* 获取远端的蓝牙设备 */
-        val device = mBluetoothAdapter!!.getRemoteDevice(address)
+        val device = bluetoothAdapter!!.getRemoteDevice(address)
         if (device == null) {
             Log.w(TAG, "Device not found.  Unable to connect.")
             return false
         }
         // We want to directly connect to the device, so we are setting the autoConnect  parameter to false.
         /* 调用device中的connectGatt连接到远程设备 */
-        mBluetoothGatt = device.connectGatt(this, false, mGattCallback)
+        bluetoothGatt = device.connectGatt(this, false, mGattCallback)
         Log.d(TAG, "Trying to create a new connection.")
-        mBluetoothDeviceAddress = address
-        mConnectionState = STATE_CONNECTING
+        bluetoothDeviceAddress = address
+        connectionState = STATE_CONNECTING
         println("device.getBondState==" + device.bondState)
         return true
     }
 
     //取消连接
     fun disconnect() {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.disconnect()
+        bluetoothGatt!!.disconnect()
     }
 
     /**
@@ -283,11 +281,11 @@ class BluetoothLeService : Service() {
      * resources are released properly.
      */
     fun close() {
-        if (mBluetoothGatt == null) {
+        if (bluetoothGatt == null) {
             return
         }
-        mBluetoothGatt!!.close()
-        mBluetoothGatt = null
+        bluetoothGatt!!.close()
+        bluetoothGatt = null
     }
 
     /**
@@ -297,40 +295,40 @@ class BluetoothLeService : Service() {
      * The characteristic to read from.
      */
     fun readCharacteristic(characteristic: BluetoothGattCharacteristic?) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.readCharacteristic(characteristic)
+        bluetoothGatt!!.readCharacteristic(characteristic)
     }
 
     // 写入特征值
     fun writeCharacteristic(characteristic: BluetoothGattCharacteristic?) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.writeCharacteristic(characteristic)
+        bluetoothGatt!!.writeCharacteristic(characteristic)
     }
 
     // 读取RSSi
     fun readRssi() {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.readRemoteRssi()
+        bluetoothGatt!!.readRemoteRssi()
     }
 
     // Enables or disables notification on a give characteristic. If true, enable notification. False otherwise.
     fun setCharacteristicNotification(
         characteristic: BluetoothGattCharacteristic, enabled: Boolean
     ) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.setCharacteristicNotification(characteristic, enabled)
+        bluetoothGatt!!.setCharacteristicNotification(characteristic, enabled)
         val clientConfig = characteristic
             .getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
         if (enabled) {
@@ -338,21 +336,21 @@ class BluetoothLeService : Service() {
         } else {
             clientConfig.value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
         }
-        mBluetoothGatt!!.writeDescriptor(clientConfig)
+        bluetoothGatt!!.writeDescriptor(clientConfig)
     }
 
     //得到特征值下的描述值
     fun getCharacteristicDescriptor(descriptor: BluetoothGattDescriptor?) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized")
             return
         }
-        mBluetoothGatt!!.readDescriptor(descriptor)
+        bluetoothGatt!!.readDescriptor(descriptor)
     }
 
     //得到蓝牙的所有服务
     val supportedGattServices: List<BluetoothGattService>?
-        get() = if (mBluetoothGatt == null) null else mBluetoothGatt!!.services
+        get() = if (bluetoothGatt == null) null else bluetoothGatt!!.services
 
     companion object {
         private const val TAG = "BluetoothLeService" // luetoothLeService.class.getSimpleName();

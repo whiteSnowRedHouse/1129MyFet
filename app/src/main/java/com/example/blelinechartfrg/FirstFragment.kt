@@ -4,11 +4,8 @@ import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
-import android.content.ComponentName
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -58,32 +55,10 @@ class FirstFragment : Fragment() {
         val lineChart1: LineChart = rootView.findViewById(R.id.lineChart1)//通道1数据
         val lineChart2: LineChart = rootView.findViewById(R.id.lineChart2)//通道2数据
         val readText: TextView = rootView.findViewById(R.id.textView3)//蓝牙读出的数据
-        val mBluetoothBService: BluetoothService? = null
+        val mBluetoothBService: BluetoothLeService? = null
+
         val TAG = "蓝牙service"
-        /* BluetoothLeService绑定的回调函数 */
-//        val mServiceConnection: ServiceConnection = object : ServiceConnection {
-//            override fun onServiceConnected(
-//                componentName: ComponentName,
-//                service: IBinder
-//            ) {
-//               mBluetoothBService=get
-//                if (!com.example.blelinechartfrg.mBluetoothLeService.initialize()) {
-//                    Log.e(
-//                        TAG,
-//                        "Unable to initialize Bluetooth"
-//                    )
-//                    finish()
-//                }
-//                // Automatically connects to the device upon successful start-up
-//                // initialization.
-//                // 根据蓝牙地址，连接设备
-//                com.example.blelinechartfrg.mBluetoothLeService.connect(mDeviceAddress)
-//            }
-//
-//            override fun onServiceDisconnected(componentName: ComponentName) {
-//                com.example.blelinechartfrg.mBluetoothLeService = null
-//            }
-//        }
+
 
         var myLineChartData: LineChartView1//创建ViewModel对象
         var x = 0
@@ -135,7 +110,6 @@ class FirstFragment : Fragment() {
         })
         connectButton.setOnClickListener(View.OnClickListener {
             mBleUtil!!.readData()
-//            readText.setText(mBleUtil!!.readData().toString())
 
 
         })
@@ -144,14 +118,6 @@ class FirstFragment : Fragment() {
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment FirstFragment.
-         */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(param1: String, param2: String) =
