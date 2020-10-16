@@ -17,4 +17,8 @@
     <string name="choose_scan_device">choose_scan_device</string>
     <string name="textview">readText</string>
     <string name="input_parameter">input</string>
+    <string name="bluetooth_has_opened">has_opened</string>
+    <string name="connected">connected</string>
+    <string name="disconnected">disconnected</string>
+    <string name="saveFile">saveFile</string>
 </resources>

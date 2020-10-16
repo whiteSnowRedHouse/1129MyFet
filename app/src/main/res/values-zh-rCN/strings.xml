@@ -17,4 +17,8 @@
     <string name="choose_scan_device">请选择扫描设备</string>
     <string name="textview">读数</string>
     <string name="input_parameter">请输入</string>
+    <string name="bluetooth_has_opened">has_opened</string>
+    <string name="connected">connected</string>
+    <string name="disconnected">disconnected</string>
+    <string name="saveFile">saveFile</string>
 </resources>
