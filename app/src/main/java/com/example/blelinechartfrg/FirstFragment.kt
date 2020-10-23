@@ -45,7 +45,6 @@ class FirstFragment : Fragment(), View.OnClickListener {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             connectBinder = service as BLEService.ConnectBinder
             bluetoothDevice?.let { connectBinder.connect(it) }
-
         }
     }
 
@@ -97,6 +96,9 @@ class FirstFragment : Fragment(), View.OnClickListener {
         val filter = IntentFilter()
         filter.addAction("com.example.blelinechartfrg.ACTION_GATT_CONNECTED")
         filter.addAction("com.example.blelinechartfrg.ACTION_DATA_AVAILABLE")
+        filter.addAction("com.example.blelinechartfrg.ACTION_GATT_SERVICES_DISCOVERED")
+        filter.addAction("com.example.blelinechartfrg.ACTION_HC42_DISCOVERED")
+        filter.addAction("com.example.blelinechartfrg.ACTION_DATA_AVAILABLE")
         context?.registerReceiver(mReceiver, filter)
     }
 
@@ -111,23 +113,11 @@ class FirstFragment : Fragment(), View.OnClickListener {
         builder.setTitle(R.string.ScanReult)
             .setAdapter(mBleUtil.adapter) { dialogInterface, i ->
                 bluetoothDevice = mBleUtil.adapter.getItem(i)!!
+                mBleUtil.stopScanDevice()
                 Log.d(TAG1, bluetoothDevice.toString())
                 openService()
             }
         builder!!.create()
         builder.show()
     }
-}
-
-
-class receiver2 : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-//            TODO("Not yet implemented")
-        val control = intent?.getIntExtra("control", -1)
-        if (control == 1) {
-            Log.d(TAG1, control.toString())
-        }
-
-    }
-
 }

@@ -4,13 +4,11 @@ import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.BluetoothProfile.STATE_CONNECTED
 import android.bluetooth.BluetoothProfile.STATE_DISCONNECTED
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
+import java.util.*
 
 
 private const val STATE_DISCONNECTED = 0
@@ -21,6 +19,7 @@ const val ACTION_GATT_DISCONNECTED = "com.example.blelinechartfrg.ACTION_GATT_DI
 const val ACTION_GATT_SERVICES_DISCOVERED =
     "com.example.blelinechartfrg.ACTION_GATT_SERVICES_DISCOVERED"
 const val ACTION_DATA_AVAILABLE = "com.example.blelinechartfrg.ACTION_DATA_AVAILABLE"
+const val ACTION_HC42_DISCOVERED = "com.example.blelinechartfrg.ACTION_HC42_DISCOVERED"
 const val EXTRA_DATA = "com.example.blelinechartfrg.EXTRA_DATA"
 const val UUID_service = "0000ffe0-0000-1000-8000-00805F9B34FB"
 const val read_UUID_service = "00002902-0000-1000-8000-00805F9B34FB"
@@ -29,6 +28,7 @@ const val write_UUID_service = "0000ffe1-0000-1000-8000-00805F9B34FB"
 class BLEService : Service() {
     val TAG = "service服务"
     var bluetoothGatt: BluetoothGatt? = null
+    lateinit var mcharacteristic: BluetoothGattCharacteristic
     private var connectionState = STATE_DISCONNECTED
     val coonectBinder = ConnectBinder()
 
@@ -41,10 +41,16 @@ class BLEService : Service() {
         fun connect(device: BluetoothDevice) {
             bluetoothGatt = device.connectGatt(applicationContext, false, gattCallback)
         }
+
     }
 
     override fun onBind(intent: Intent): IBinder {
         return coonectBinder
+    }
+
+    fun readCharacteristic() {
+        bluetoothGatt?.readCharacteristic(mcharacteristic)
+
     }
 
     val gattCallback = object : BluetoothGattCallback() {
@@ -89,18 +95,24 @@ class BLEService : Service() {
                             "onServicesDiscovered服务" + i + "的特征数量：" + characteristics.size
                         )
                         for (j in characteristics.indices) {
-                            if (characteristics[j].uuid.toString().contains("ae10")) {
-                                //  gatt.readCharacteristic(characteristics.get(j)); //读数据，跳到onCharacteristicRead
-                                val value = byteArrayOf(1, 2, 3, 4, 5, 6)
-                                characteristics[j].value = value
-                                gatt.writeCharacteristic(characteristics[j]) //调到onCharacteristicWrite
+                            if (characteristics[j].uuid.toString().contains("e1")) {
+                                Log.d(
+                                    TAG,
+                                    "onServicesDiscovered服务" + j + "的特征UUID：" + characteristics.get(
+                                        j
+                                    ).uuid.toString()
+                                )
+                                mcharacteristic = characteristics[j]
+                                readCharacteristic()
+//                                val intent=Intent(ACTION_HC42_DISCOVERED)
+//                                intent.putExtra("EXTRA_DATA",characteristics[j].toString())
+//                                sendBroadcast(intent)
+
                             }
                         }
                     }
-
-
                 }
-                else -> Log.w(
+                else -> Log.d(
                     TAG + "+onServicesDiscovered",
                     "onServicesDiscovered received: $status"
                 )
@@ -115,26 +127,57 @@ class BLEService : Service() {
         ) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
+                    Log.d(TAG, "进入读回调")
+                    Log.d(TAG + "characteristic", characteristic.toString())
+                    setNotification(characteristic, true)
                     broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
                 }
             }
         }
+
+        fun setNotification(
+            characteristic: BluetoothGattCharacteristic,
+            enabled: Boolean
+        ) {
+
+            bluetoothGatt?.setCharacteristicNotification(characteristic, enabled)
+            val clientConfig = characteristic
+                .getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
+            Log.d(TAG, "setNotification:::::::" + clientConfig.toString())
+            if (enabled) {
+                clientConfig.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            } else {
+                clientConfig.value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            }
+            bluetoothGatt?.writeDescriptor(clientConfig)
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+            println("//++++++++++++++++")
+            if (characteristic != null) {
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+            }
+        }
+
     }
 
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "进入onStartCommand1")
-        val deviceReceiver = DeviceReceiver()
-        val filter = IntentFilter()
-        filter.addAction("deviceConnect")
-        registerReceiver(deviceReceiver, filter)
-        Log.d(TAG, "进入onStartCommand2")
         return super.onStartCommand(intent, flags, startId)
+        val str: String = intent?.extras?.getString("EXTRA_DATA").toString()
+        if (str == "readData") {
+            readCharacteristic()
+        }
+
     }
 
 
     override fun onCreate() {
         super.onCreate()
-//        bluetoothGatt?.getService(UUID_service)?.getCharacteristic(read_UUID_service)
     }
 
     //广播各种蓝牙相关状态,发送广播
@@ -148,23 +191,26 @@ class BLEService : Service() {
 
     private fun broadcastUpdate(action: String, characteristic: BluetoothGattCharacteristic) {
         val intent = Intent(action)
-        val heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 1)
-        Log.d(TAG, String.format("Received heart rate: %d", heartRate))
-        intent.putExtra(EXTRA_DATA, (heartRate).toString())
+        //从特征值获取数据
+        //从特征值获取数据
+        val data = characteristic.value
+        if (data != null && data.size > 0) {
+            val stringBuilder = StringBuilder(data.size)
+            for (byteChar in data) {
+                stringBuilder.append(String.format("%02X ", byteChar))
+                Log.d(
+                    TAG,
+                    "***broadcastUpdate: byteChar = $byteChar"
+                )
+            }
+            intent.putExtra(EXTRA_DATA, String(data))
+            println(
+                "broadcastUpdate for  read data:"
+                        + String(data)
+            )
+        }
         sendBroadcast(intent)
     }
-}
-
-class DeviceReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        val action = intent?.action
-        Log.d("扫描结果选择", "进入接收广播")
-//        val device: String? = intent?.getStringExtra("DEVICECONNECT")
-        if (action == "deviceConnect") {
-            Log.d("扫描结果选择", action)
-        }
-    }
-
 }
 
 

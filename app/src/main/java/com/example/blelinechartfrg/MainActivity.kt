@@ -113,21 +113,51 @@ class receiver : BroadcastReceiver() {
             }
             ACTION_GATT_DISCONNECTED -> {
                 Log.d("MainActivity", "GATT连接失败")
-//                connected = false
-//                updateConnectionState(R.string.disconnected)
-//                (context as? Activity)?.invalidateOptionsMenu()
-//                clearUI()
+
             }
             ACTION_GATT_SERVICES_DISCOVERED -> {
-                // Show all the supported services and characteristics on the
-//                // user interface.
-//                displayGattServices(bluetoothLeService.getSupportedGattServices())
+                Log.d("MainActivity:", "发现GATT服务")
+
+                println(
+                    "BroadcastReceiver :"
+                            + "device SERVICES_DISCOVERED"
+                )
+
+
+            }
+            ACTION_HC42_DISCOVERED -> {
+                Log.d("MainActivity:", "ACTION_HC42_DISCOVERED")
+                Log.d("MainActivity:", intent.extras?.getString("EXTRA_DATA").toString())
+                val intent = Intent(context, BLEService::class.java)
+                intent.putExtra("EXTRA_DATA", "readData")
+                context.startService(intent)
+
             }
             ACTION_DATA_AVAILABLE -> {
-                Log.d(TAG1, intent.getStringExtra("EXTRA_DATA")!!)
-//                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA))
+//                Log.d(TAG1, intent.getStringExtra("EXTRA_DATA")!!)
+                //处理发送过来的数据
+                intent.extras!!.getString("EXTRA_DATA")?.let {
+                    displayData(
+                        it
+                    )
+                }
+                println("BroadcastReceiver onData:")
+
+
             }
         }
     }
 
+
+    private fun displayData(rev_string: String) {
+        var rev_str: String = ""
+        rev_str += rev_string
+//        println("rev:$rev_str")
+        Thread(Runnable {
+//            rev_tv.setText(rev_str)
+//            rev_sv.scrollTo(0, rev_tv.getMeasuredHeight())
+            println("rev:$rev_str")
+        })
+    }
 }
+
