@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -17,10 +19,15 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var mReceiver: receiver
+    val connected = 1
+    val disconnected = 2
+    lateinit var handler: Handler
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,13 +53,33 @@ class MainActivity : AppCompatActivity() {
         mReceiver = receiver()
         val filter = IntentFilter()
         filter.addAction("com.example.blelinechartfrg.ACTION_GATT_CONNECTED")
+        filter.addAction("com.example.blelinechartfrg.ACTION_DATA_AVAILABLE")
+        filter.addAction("com.example.blelinechartfrg.ACTION_GATT_SERVICES_DISCOVERED")
+        filter.addAction("com.example.blelinechartfrg.ACTION_HC42_DISCOVERED")
+        filter.addAction("com.example.blelinechartfrg.ACTION_DATA_AVAILABLE")
         registerReceiver(mReceiver, filter)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         //创建顶部ToolBar菜单
         menuInflater.inflate(R.menu.menu_toolbar, menu)
+        handler = object : Handler() {
+            override fun handleMessage(msg: Message) {
+                when (msg.what) {
+                    connected -> {
+                        val item: MenuItem = menu!!.findItem(R.id.is_connect)
+                        item.setTitle("connected")
+                    }
+                    disconnected -> {
+                        val item: MenuItem = menu!!.findItem(R.id.is_connect)
+                        item.setTitle("disconnected")
+                    }
+                }
+            }
+        }
         return true
+
+
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -82,15 +109,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             R.id.is_connect -> {
-                //通过广播改变title失败，哭唧唧
-//                val filter=IntentFilter()
-//                filter.addAction("com.example.blelinechartfrg.ACTION_GATT_CONNECTED")
-//                val mReceiver=object:BroadcastReceiver() {
-//                    override fun onReceive(context: Context?, intent: Intent?) {
-//                        item.setTitle("connected")
-//                    }
-//                }
-//                registerReceiver(mReceiver,filter)
 
             }
         }
@@ -98,55 +116,60 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-}
+    inner class receiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action = intent.action
+            val updateConnect = 1
+            val updatDisconnect = 2
+            Log.d(TAG1, "接收广播")
+            when (action) {
+                ACTION_GATT_CONNECTED -> {
+                    Log.d("MainActivity", "GATT连接成功")
+                    thread {
+                        val msg = Message()
+                        msg.what = connected
+                        handler.sendMessage(msg)
+                    }
+                }
+                ACTION_GATT_DISCONNECTED -> {
+                    Log.d("MainActivity", "GATT连接失败")
 
-class receiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
-        Log.d(TAG1, "接收广播")
-        when (action) {
-            ACTION_GATT_CONNECTED -> {
-                Log.d("MainActivity", "GATT连接成功")
+                }
+                ACTION_GATT_SERVICES_DISCOVERED -> {
+                    Log.d("MainActivity:", "发现GATT服务")
+                    println(
+                        "BroadcastReceiver :"
+                                + "device SERVICES_DISCOVERED"
+                    )
+                }
+                ACTION_HC42_DISCOVERED -> {
+                    Log.d("MainActivity:", "ACTION_HC42_DISCOVERED")
+                    Log.d("MainActivity:", intent.extras?.getString("EXTRA_DATA").toString())
+                    val intent = Intent(context, BLEService::class.java)
+                    intent.putExtra("EXTRA_DATA", "readData")
+                    context.startService(intent)
 
-            }
-            ACTION_GATT_DISCONNECTED -> {
-                Log.d("MainActivity", "GATT连接失败")
-
-            }
-            ACTION_GATT_SERVICES_DISCOVERED -> {
-                Log.d("MainActivity:", "发现GATT服务")
-
-                println(
-                    "BroadcastReceiver :"
-                            + "device SERVICES_DISCOVERED"
-                )
-
-
-            }
-            ACTION_HC42_DISCOVERED -> {
-                Log.d("MainActivity:", "ACTION_HC42_DISCOVERED")
-                Log.d("MainActivity:", intent.extras?.getString("EXTRA_DATA").toString())
-                val intent = Intent(context, BLEService::class.java)
-                intent.putExtra("EXTRA_DATA", "readData")
-                context.startService(intent)
-
-            }
-            ACTION_DATA_AVAILABLE -> {
-                Log.d(TAG1, "ACTION_DATA_AVAILABLE")
-                val str = intent.extras?.getString(EXTRA_DATA)
-                Log.d(TAG1, "BroadcastReceiver onData:" + str)
+                }
+                ACTION_DATA_AVAILABLE -> {
+                    Log.d(TAG1, "ACTION_DATA_AVAILABLE")
+                    val str = intent.extras?.getString(EXTRA_DATA)
+                    Log.d(TAG1, "BroadcastReceiver onData:" + str)
 //                println("BroadcastReceiver onData:")
+                }
             }
         }
+
+
+        private fun displayData(rev_string: String) {
+            var rev_str: String = ""
+            rev_str += rev_string
+            Thread(Runnable {
+                println("rev:$rev_str")
+            })
+        }
+
     }
 
 
-    private fun displayData(rev_string: String) {
-        var rev_str: String = ""
-        rev_str += rev_string
-        Thread(Runnable {
-            println("rev:$rev_str")
-        })
-    }
 }
 
