@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 
 // TODO: Rename parameter arguments, choose names that match
@@ -32,6 +33,11 @@ class FirstFragment : Fragment(), View.OnClickListener {
     var bluetoothDevice: BluetoothDevice? = null
     lateinit var connectBinder: BLEService.ConnectBinder
     lateinit var scanButton: Button
+    lateinit var testButton: Button
+    lateinit var saveFileButton: Button
+
+    lateinit var editText1Vg: EditText
+    lateinit var editText2Vds: EditText
     lateinit var mBleUtil: BleUtil
     lateinit var mReceiver: receiver
 
@@ -45,6 +51,7 @@ class FirstFragment : Fragment(), View.OnClickListener {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             connectBinder = service as BLEService.ConnectBinder
             bluetoothDevice?.let { connectBinder.connect(it) }
+            bleService = connectBinder.getService()
         }
     }
 
@@ -64,7 +71,13 @@ class FirstFragment : Fragment(), View.OnClickListener {
         val rootView = inflater.inflate(R.layout.first_fragment, container, false)
         mBleUtil = context?.let { BleUtil(it) }!!
         scanButton = rootView.findViewById(R.id.button1)
+        editText1Vg = rootView.findViewById(R.id.editText1)//获得Vg
+        editText2Vds = rootView.findViewById(R.id.editText2)//获得Vds
+        testButton = rootView.findViewById(R.id.button2)
+        saveFileButton = rootView.findViewById(R.id.button3)
         scanButton?.setOnClickListener(this)
+        testButton?.setOnClickListener(this)
+        saveFileButton?.setOnClickListener(this)
 
         return rootView
     }
@@ -88,6 +101,17 @@ class FirstFragment : Fragment(), View.OnClickListener {
             receiveBroadcast()
             Log.d(TAG1 + "bleService.toString()", bleService.toString())
         }
+        if (testButton == v) {
+            Log.d(TAG1, "testButton被点击了")
+            val intent = Intent(context, BLEService::class.java)
+            intent.putExtra(
+                "SET_DATA",
+                editText1Vg.text.toString() + "/" + editText2Vds.text.toString()
+            )
+            context?.startService(intent)
+            Log.d(TAG1, editText1Vg.text.toString() + editText2Vds.text.toString())
+        }
+
     }
 
     //接收状态连接广播

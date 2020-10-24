@@ -21,4 +21,11 @@
     <string name="connected">connected</string>
     <string name="disconnected">disconnected</string>
     <string name="saveFile">saveFile</string>
+    <string name="vds">Vds</string>
+    <string name="textview1">value1</string>
+    <string name="textview2">value2</string>
+    <string name="textview3">value3</string>
+    <string name="vg">Vg</string>
+    <string name="setvds">setVds</string>
+    <string name="setvg">setVg</string>
 </resources>

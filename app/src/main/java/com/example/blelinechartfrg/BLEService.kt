@@ -31,6 +31,7 @@ class BLEService : Service() {
     lateinit var mcharacteristic: BluetoothGattCharacteristic
     private var connectionState = STATE_DISCONNECTED
     val coonectBinder = ConnectBinder()
+    lateinit var str: String
 
     //通过继承实现connectBinder类
     inner class ConnectBinder : Binder() {
@@ -162,22 +163,53 @@ class BLEService : Service() {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
             }
         }
-
     }
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return super.onStartCommand(intent, flags, startId)
-        val str: String = intent?.extras?.getString("EXTRA_DATA").toString()
-        if (str == "readData") {
-            readCharacteristic()
+        str = intent?.extras?.getString("SET_DATA").toString()
+        if (str != "") {
+            // TODO Auto-generated method stub
+            val buff: ByteArray = str.toByteArray()
+            val len = buff.size
+            val lens: IntArray = dataSeparate(len)
+            for (i in 0 until lens[0]) {
+                val str0 = String(buff, 20 * i, 20)
+                mcharacteristic.setValue(str0)
+                bluetoothGatt?.writeCharacteristic(mcharacteristic)
+            }
+            if (lens[1] != 0) {
+                val str1 = String(buff, 20 * lens[0], lens[1])
+                mcharacteristic.setValue(str1)
+                bluetoothGatt?.writeCharacteristic(mcharacteristic)
+            }
+            Log.d(TAG, "onStartCommand:" + str)
+        } else {
+            Log.d(TAG, "蓝牙尚未连接")
+
         }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    /**
+     * 将数据分包
+     */
+    fun dataSeparate(len: Int): IntArray {
+        val lens = IntArray(2)
+        lens[0] = len / 20
+        lens[1] = len - 20 * lens[0]
+        return lens
+    }
+
+    fun write() {
+        bluetoothGatt?.writeCharacteristic(mcharacteristic)
 
     }
 
 
     override fun onCreate() {
         super.onCreate()
+
     }
 
     //广播各种蓝牙相关状态,发送广播

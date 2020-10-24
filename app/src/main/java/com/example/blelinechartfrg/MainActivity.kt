@@ -107,9 +107,7 @@ class receiver : BroadcastReceiver() {
         when (action) {
             ACTION_GATT_CONNECTED -> {
                 Log.d("MainActivity", "GATT连接成功")
-//                connected = true
-//                updateConnectionState(R.string.connected)
-//                (context as? Activity)?.invalidateOptionsMenu()
+
             }
             ACTION_GATT_DISCONNECTED -> {
                 Log.d("MainActivity", "GATT连接失败")
@@ -134,16 +132,10 @@ class receiver : BroadcastReceiver() {
 
             }
             ACTION_DATA_AVAILABLE -> {
-//                Log.d(TAG1, intent.getStringExtra("EXTRA_DATA")!!)
-                //处理发送过来的数据
-                intent.extras!!.getString("EXTRA_DATA")?.let {
-                    displayData(
-                        it
-                    )
-                }
-                println("BroadcastReceiver onData:")
-
-
+                Log.d(TAG1, "ACTION_DATA_AVAILABLE")
+                val str = intent.extras?.getString(EXTRA_DATA)
+                Log.d(TAG1, "BroadcastReceiver onData:" + str)
+//                println("BroadcastReceiver onData:")
             }
         }
     }
@@ -152,10 +144,7 @@ class receiver : BroadcastReceiver() {
     private fun displayData(rev_string: String) {
         var rev_str: String = ""
         rev_str += rev_string
-//        println("rev:$rev_str")
         Thread(Runnable {
-//            rev_tv.setText(rev_str)
-//            rev_sv.scrollTo(0, rev_tv.getMeasuredHeight())
             println("rev:$rev_str")
         })
     }
